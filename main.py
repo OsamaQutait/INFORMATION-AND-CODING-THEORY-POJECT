@@ -1,8 +1,15 @@
 # A Huffman Tree Node
 import heapq
+from prettytable import PrettyTable
+import math
 
-char_freq = {}
 
+class symbol_class:
+    def __init__(self, symbol_char, char_freq, codeword, len_codeword):
+        self.char_freq = char_freq
+        self.symbol_char = symbol_char
+        self.codeword = codeword
+        self.len_codeword = len_codeword
 class node:
     def __init__(self, freq, symbol, left=None, right=None):
         # frequency of symbol
@@ -23,73 +30,71 @@ class node:
     def __lt__(self, nxt):
         return self.freq < nxt.freq
 
-
-# utility function to print huffman
-# codes for all symbols in the newly
-# created Huffman tree
+char_freq = {}
+table = PrettyTable()
+symbols = []
 def printNodes(node, val=''):
-    # huffman code for current node
     newVal = val + str(node.huff)
-
-    # if node is not an edge node
-    # then traverse inside it
     if (node.left):
         printNodes(node.left, newVal)
     if (node.right):
         printNodes(node.right, newVal)
 
-    # if node is edge node then
-    # display its huffman code
     if (not node.left and not node.right):
-        print(f"{node.symbol} -> {newVal}")
-
+        symbols.append(symbol_class(node.symbol, char_freq[node.symbol], newVal, len(newVal)))
+        # print(f"{node.symbol} -> {newVal}")
 def read_file():
+    char_sum = 0
     file = open('store.txt', 'r')
     while 1:
         # read by character
         char = file.read(1)
         if not char:
             break
+        char_sum += 1
+        char = char.lower()
+        if char == " ":
+            char = "space"
+        if char == '\n':
+            continue
         if not char_freq.__contains__(char):
             char_freq.__setitem__(char, 1)
         else:
             char_freq.__setitem__(char, char_freq.__getitem__(char) + 1)
     file.close()
+    return char_sum
 
-
-
-# characters for huffman tree
-chars = ['a', 'b', 'c', 'd', 'e', 'f']
-
-# frequency of characters
-freq = [5, 9, 12, 13, 16, 45]
 if __name__ == '__main__':
-    read_file()
-    # list containing unused nodes
+    char_sum = read_file()
+    table.field_names = ["Symbol", "Symbol frequency", "Probability", "codeword", "Length of code  word in bits"]
     nodes = []
-
-    # converting characters and frequencies
-    # into huffman tree nodes
     for key, value in char_freq.items():
         heapq.heappush(nodes, node(value, key))
-    # for x in range(len(chars)):
-    #     heapq.heappush(nodes, node(freq[x], chars[x]))
-
     while len(nodes) > 1:
-        # sort all the nodes in ascending order
-        # based on their frequency
         left = heapq.heappop(nodes)
         right = heapq.heappop(nodes)
-
-        # assign directional value to these nodes
         left.huff = 0
         right.huff = 1
-
-        # combine the 2 smallest nodes to create
-        # new node as their parent
         newNode = node(left.freq + right.freq, left.symbol + right.symbol, left, right)
 
         heapq.heappush(nodes, newNode)
 
     # Huffman Tree is ready!
     printNodes(nodes[0])
+    symbols.sort(key=lambda x: x.char_freq, reverse=True)
+    avg_len = 0
+    entropy = 0
+    total_num_of_bits_from_huffman = 0
+    total_num_of_bits_from_ASCII = char_sum*8
+    for s in symbols:
+        total_num_of_bits_from_huffman += s.char_freq*s.len_codeword
+        table.add_row([s.symbol_char, s.char_freq, (s.char_freq / len(char_freq)), s.codeword, s.len_codeword])
+        avg_len += (s.char_freq / len(char_freq))*s.len_codeword
+        entropy += (s.char_freq / len(char_freq))+math.log((s.char_freq / len(char_freq)), 2)
+    percentage_of_compression = (total_num_of_bits_from_huffman / total_num_of_bits_from_ASCII) * 100
+    print(table)
+    print("The average number of bits/character for the whole story == ", avg_len, "bit/character")
+    print("The entropy of the alphabet == ", entropy, "bit/character")
+    print("If ASCII code is used the number of bits needed to encode the story == ", total_num_of_bits_from_ASCII)
+    print("the percentage of compression accomplished by using the Huffman encoding as compared to ASCII code == ", percentage_of_compression, "%")
+
