@@ -2,6 +2,7 @@
 import heapq
 from prettytable import PrettyTable
 import math
+import docx2txt
 
 
 class symbol_class:
@@ -45,12 +46,11 @@ def printNodes(node, val=''):
         # print(f"{node.symbol} -> {newVal}")
 def read_file():
     char_sum = 0
-    file = open('store.txt', 'r')
-    while 1:
-        # read by character
-        char = file.read(1)
-        if not char:
-            break
+    # text = docx2txt.process("The+Boarding+House.docx")
+    text = docx2txt.process("Shooting+an+elephant+by+George+Orwell+recovered.docx")
+    # text = docx2txt.process("test.docx")
+
+    for char in text:
         char_sum += 1
         char = char.lower()
         if char == " ":
@@ -61,7 +61,6 @@ def read_file():
             char_freq.__setitem__(char, 1)
         else:
             char_freq.__setitem__(char, char_freq.__getitem__(char) + 1)
-    file.close()
     return char_sum
 
 if __name__ == '__main__':
@@ -88,13 +87,14 @@ if __name__ == '__main__':
     total_num_of_bits_from_ASCII = char_sum*8
     for s in symbols:
         total_num_of_bits_from_huffman += s.char_freq*s.len_codeword
-        table.add_row([s.symbol_char, s.char_freq, (s.char_freq / len(char_freq)), s.codeword, s.len_codeword])
-        avg_len += (s.char_freq / len(char_freq))*s.len_codeword
-        entropy += (s.char_freq / len(char_freq))+math.log((s.char_freq / len(char_freq)), 2)
+        table.add_row([s.symbol_char, s.char_freq, (s.char_freq / char_sum), s.codeword, s.len_codeword])
+        avg_len += (s.char_freq / char_sum)*s.len_codeword
+        entropy += abs((s.char_freq / char_sum)*math.log((s.char_freq / char_sum), 2))
     percentage_of_compression = (total_num_of_bits_from_huffman / total_num_of_bits_from_ASCII) * 100
     print(table)
     print("The average number of bits/character for the whole story == ", avg_len, "bit/character")
     print("The entropy of the alphabet == ", entropy, "bit/character")
     print("If ASCII code is used the number of bits needed to encode the story == ", total_num_of_bits_from_ASCII)
+    print("If huffman code is used the number of bits needed to encode the story == ", total_num_of_bits_from_huffman)
     print("the percentage of compression accomplished by using the Huffman encoding as compared to ASCII code == ", percentage_of_compression, "%")
 
